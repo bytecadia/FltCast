@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ranges>
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <spdlog/spdlog.h>
 
@@ -23,16 +24,16 @@ inline std::string to_str(AircraftType type)
     switch (type)
     {
     case AircraftType::Prop:
-        return "Prop";
+        return "prop";
         break;
     case AircraftType::Jet:
-        return "Jet";
+        return "jet";
         break;
     case AircraftType::Heli:
-        return "Heli";
+        return "heli";
         break;
     default:
-        return "Unk";
+        return "unk";
         break;
     }
 }
@@ -83,7 +84,11 @@ inline AircraftInfo lookup_aircraft(SQLite::Database &db, std::string icao)
 {
     try
     {
-        // TODO:: What more to add?
+        // TODO: Should I make this lower or upper in db
+        std::ranges::transform(icao, icao.begin(), [](unsigned char c)
+                               { return std::tolower(c); });
+
+        // TODO: What more to add?
         SQLite::Statement query(db,
                                 "SELECT "
                                 "manufacturer, "
@@ -165,12 +170,12 @@ struct DisplayData
         std::string airline = lookup_airline(db, a.callsign);
         AircraftInfo info = lookup_aircraft(db, a.icao);
 
-        img_path = std::format("assets/sprites/{}", to_str(info.type));
+        img_path = std::format("{}/sprites/{}.png", ASSETS_PATH, to_str(info.type));
 
         if (!airline.empty())
         {
             header = airline;
-            auto try_path = std::format("assets/airlines/{}", airline); // Hardcoded for now
+            auto try_path = std::format("{}/airlines/{}.png", ASSETS_PATH, airline); // Hardcoded for now
             if (std::filesystem::exists(try_path))
                 img_path = try_path;
         }

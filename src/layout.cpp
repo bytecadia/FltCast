@@ -201,7 +201,7 @@ std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_
 
 std::vector<Position> layout(const DisplayLayout &disp, int64_t time, Image img)
 {
-    const int y1 = img.h + disp.rows[0].h;
+    const int y1 = disp.rows[0].h;
     const int y2 = y1 + disp.rows[1].h + disp.row_gap;
     const int y4 = disp.content.btm();
     const int y3 = y4 - disp.rows[3].h - disp.row_gap;

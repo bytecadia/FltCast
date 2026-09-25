@@ -63,6 +63,7 @@ void render(std::stop_token st, Snapshot &snap, const Config &cfg, SQLite::Datab
 
     rgb_matrix::RuntimeOptions runtime_opt;
     runtime_opt.gpio_slowdown = 5;
+    runtime_opt.drop_privileges = -1;
 
     rgb_matrix::RGBMatrix *mtrx = rgb_matrix::CreateMatrixFromOptions(options, runtime_opt);
     if (mtrx == NULL)
@@ -95,6 +96,10 @@ void render(std::stop_token st, Snapshot &snap, const Config &cfg, SQLite::Datab
             draw_image(canvas, disp.content.lft(), disp.content.tp(), *img);
 
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+
+        if (!img) // TODO: Fix, this is ugly
+            img = Image{};
+
         auto positions = layout(disp, elapsed, *img);
 
         draw(positions, canvas);
