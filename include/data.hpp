@@ -156,7 +156,7 @@ struct DisplayData
 {
     std::string header; // Airline or manufacturer - this is why database is needed
     std::string img_path;
-    std::string callsign;
+    std::string sub_header;
     int alt;
     int speed;
     int distance;
@@ -182,7 +182,11 @@ struct DisplayData
         else
             header = std::format("{} {}", info.mfc, info.mdl);
 
-        callsign = a.callsign;
+        sub_header = a.icao;
+
+        if (!a.callsign.empty())
+            sub_header = trim(a.callsign);
+
         alt = *a.alt;
         speed = *a.gs;
         distance = static_cast<int>(calc_dist(cfg.lat, cfg.lon, *a.lat, *a.lon));

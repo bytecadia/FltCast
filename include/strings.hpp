@@ -34,3 +34,15 @@ inline std::string parse_chars(const std::string &str)
     }
     return "";
 }
+
+inline std::string trim(std::string s)
+{
+    const auto first = s.find_first_not_of(" \t\n\r\f\v");
+
+    if (first == std::string::npos)
+        return "";
+
+    const auto last = s.find_last_not_of(" \t\n\r\f\v");
+
+    return s.substr(first, last - first + 1);
+}
