@@ -28,6 +28,12 @@ inline double calc_bearing(double base_lat, double base_lon,
     return std::fmod(degrees + 360.0, 360.0);
 }
 
+inline std::string cardinal_dir(double bearing)
+{
+    static const char *dirs[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+    return dirs[static_cast<int>((bearing + 22.5) / 45.0) % 8];
+}
+
 // Equirectangular approximation
 inline double calc_dist(double base_lat, double base_lon,
                         double targ_lat, double targ_lon)

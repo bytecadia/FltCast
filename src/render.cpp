@@ -83,6 +83,9 @@ void render(std::stop_token st, Snapshot &snap, const Config &cfg, SQLite::Datab
                               // There needs to be a way to tell if update is necessary
                               // so display data obect doesn't need to be written
                               // every refresh
+                              // I still need looping because of the scrolling but I
+                              // don't need to make a new display data object if its
+                              // not any new data
         // TODO: Create an idle screen?
 
         if (!a)

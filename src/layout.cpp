@@ -8,6 +8,7 @@
 #include "graphics.h"
 #include "data.hpp"
 #include "layout.hpp"
+#include "geometry.hpp"
 
 DisplayLayout::DisplayLayout(const DisplayData &data,
                              const rgb_matrix::Font &sml,
@@ -36,8 +37,7 @@ DisplayLayout::DisplayLayout(const DisplayData &data,
     rows.push_back(Row{
         Mode::Clip,
         {Element{Mode::Fit, 2, {Text{std::to_string(data.distance), &med, &YELLOW}, Text{"mi", &sml, &LIGHT_YELLOW}}},
-         Element{Mode::Fit, 2, {Text{std::to_string(data.bearing), &med, &YELLOW}}},
-         Element{Mode::Fit, 2, {Text{"-", &med, &YELLOW}, Text{std::to_string(data.track), &med, &YELLOW}, Text{"Deg", &sml, &LIGHT_YELLOW}}}},
+         Element{Mode::Fit, 0, {Text{cardinal_dir(data.bearing), &med, &YELLOW}, Text{"·", &sml, &YELLOW}, Text{std::to_string(data.track), &med, &YELLOW}, Text{"Deg", &sml, &LIGHT_YELLOW}}}},
         lrg.height(),
         2});
 
