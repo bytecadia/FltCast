@@ -1,5 +1,12 @@
 # FltCast
 
+This a C++ flight tracker that reads SBS data from the socket, slects the nearest plane, and writes it to led matrix. This data is read directly from socket 30003. Paired with the rtl-sdr. And a ADSB Decoder. 
+
+
+
+Architecture
+
+
 Remove pi's audio kernel mod - can't run matrix library without it 
 ```
 lsmod | grep snd_bcm2835
