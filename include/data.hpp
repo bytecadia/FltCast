@@ -123,12 +123,12 @@ inline AircraftInfo lookup_aircraft(SQLite::Database &db, std::string icao)
     return AircraftInfo{}; // TODO: Hacking here see todo above
 }
 
-inline std::string lookup_airline(SQLite::Database &db, std::string callsign)
+inline std::pair<std::string, std::string> lookup_airline(SQLite::Database &db, std::string callsign)
 {
     std::string code = parse_chars(callsign);
 
     if (code.empty())
-        return "";
+        return {};
 
     try
     {
@@ -141,15 +141,15 @@ inline std::string lookup_airline(SQLite::Database &db, std::string callsign)
         query.bind(1, code);
 
         if (!query.executeStep())
-            return "";
+            return {};
 
-        return query.getColumn(0).getString();
+        return {code, query.getColumn(0).getString()};
     }
     catch (const SQLite::Exception &e)
     {
         spdlog::error("Lookup airline failed for callsign '{}' and ICAO '{}' with error '{}'", callsign, code, e.what());
     }
-    return "";
+    return {};
 }
 
 struct DisplayData
@@ -167,7 +167,7 @@ struct DisplayData
     DisplayData(SQLite::Database &db, const Aircraft &a,
                 const Config &cfg) // Assumes aircraft has all info
     {
-        std::string airline = lookup_airline(db, a.callsign);
+        auto [code, airline] = lookup_airline(db, a.callsign);
         AircraftInfo info = lookup_aircraft(db, a.icao);
 
         img_path = std::format("{}/sprites/{}.png", ASSETS_PATH, to_str(info.type));
@@ -175,7 +175,7 @@ struct DisplayData
         if (!airline.empty())
         {
             header = airline;
-            auto try_path = std::format("{}/airlines/{}.png", ASSETS_PATH, airline); // Hardcoded for now
+            auto try_path = std::format("{}/airlines/{}.png", ASSETS_PATH, code);
             if (std::filesystem::exists(try_path))
                 img_path = try_path;
         }

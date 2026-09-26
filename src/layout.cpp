@@ -34,10 +34,10 @@ DisplayLayout::DisplayLayout(const DisplayData &data,
         2});
 
     rows.push_back(Row{
-        Mode::Fit,
+        Mode::Clip,
         {Element{Mode::Fit, 2, {Text{std::to_string(data.distance), &med, &YELLOW}, Text{"mi", &sml, &LIGHT_YELLOW}}},
-         Element{Mode::Fit, 0, {Text{std::to_string(data.bearing), &med, &YELLOW}}},
-         Element{Mode::Fit, 2, {Text{"-", &med, &YELLOW}, Text{std::to_string(data.track), &med, &YELLOW}, Text{"°", &sml, &LIGHT_YELLOW}}}},
+         Element{Mode::Fit, 2, {Text{std::to_string(data.bearing), &med, &YELLOW}}},
+         Element{Mode::Fit, 2, {Text{"-", &med, &YELLOW}, Text{std::to_string(data.track), &med, &YELLOW}, Text{"Deg", &sml, &LIGHT_YELLOW}}}},
         lrg.height(),
         2});
 
