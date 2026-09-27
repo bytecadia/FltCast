@@ -1,8 +1,10 @@
 # FltCast
 
-This a C++ flight tracker that reads SBS data from the socket, slects the nearest plane, and writes it to led matrix. This data is read directly from socket 30003. Paired with the rtl-sdr. And a ADSB Decoder. 
+This a C++ flight tracker that reads SBS data from from a sockey, slects the nearest plane, and writes it to led matrix. This data is read directly from socket 30003. Paired with the rtl-sdr. And a ADSB Decoder. 
 
+A ADS-B flight tracker and display build in C++ to be ran on Raspberry Pi and HUB75 matrices.
 
+FltCast recieves aircraft data from SBS streams from any adsb decoder, and renders nearby aircraft to a LED matrix
 
 Architecture
 

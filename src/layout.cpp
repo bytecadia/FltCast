@@ -110,7 +110,7 @@ std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_
             case Mode::Scroll: // TODO: Only scrows when the text overflows, is that what I want?
             {
                 std::vector<Element> rest(row.items.begin() + i, row.items.end());
-                auto [x_first, x_rollover] = lft_scrl_plcmnt(x, l, r, 3, 5, time, Row{row.mode, rest, row.h, row.gap}); // TODO: Hard code gap and pps for now
+                auto [x_first, x_rollover] = lft_scrl_plcmnt(x, l, r, 3, 15, time, Row{row.mode, rest, row.h, row.gap}); // TODO: Hard code gap and pps for now
 
                 np = lay_elmnt(x_first, y, l, r, w, row.gap, elmnt);
                 pos.insert(pos.end(), np.begin(), np.end());
