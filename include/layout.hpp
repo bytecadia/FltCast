@@ -38,7 +38,7 @@ int msr(const T &t)
     return w;
 }
 
-std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w, int gap, Element &elmnt);
+std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w, Element &elmnt);
 std::pair<int, int> rght_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest);
 std::pair<int, int> lft_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest);
 std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_t time);

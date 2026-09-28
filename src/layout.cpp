@@ -49,7 +49,7 @@ int msr(const Text &t)
     return MeasureText(*t.font, t.items.c_str(), 0);
 }
 
-std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w, int gap,
+std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w,
                                 Element &elmnt)
 {
     int start = x;
@@ -61,7 +61,7 @@ std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w, int gap,
 
         x += msr(itm);
         if (i < elmnt.items.size() - 1)
-            x += gap;
+            x += elmnt.gap;
 
         pos.push_back(np);
     }
@@ -94,7 +94,7 @@ std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_
     {
         int w;
         Element elmnt = row.items[i];
-        std::vector<Position> np = lay_elmnt(x, y, l, r, w, row.gap, elmnt);
+        std::vector<Position> np = lay_elmnt(x, y, l, r, w, elmnt);
 
         if (x + w > r)
         {
@@ -112,10 +112,10 @@ std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_
                 std::vector<Element> rest(row.items.begin() + i, row.items.end());
                 auto [x_first, x_rollover] = lft_scrl_plcmnt(x, l, r, 3, 15, time, Row{row.mode, rest, row.h, row.gap}); // TODO: Hard code gap and pps for now
 
-                np = lay_elmnt(x_first, y, l, r, w, row.gap, elmnt);
+                np = lay_elmnt(x_first, y, l, r, w, elmnt);
                 pos.insert(pos.end(), np.begin(), np.end());
 
-                np = lay_elmnt(x_rollover, y, l, r, w, row.gap, elmnt);
+                np = lay_elmnt(x_rollover, y, l, r, w, elmnt);
                 pos.insert(pos.end(), np.begin(), np.end());
 
                 x += w + row.gap;

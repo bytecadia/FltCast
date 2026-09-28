@@ -6,8 +6,18 @@ A ADS-B flight tracker and display build in C++ to be ran on Raspberry Pi and HU
 
 FltCast recieves aircraft data from SBS streams from any adsb decoder, and renders nearby aircraft to a LED matrix
 
+![Display w/ Sprite](assets/display_sprite.png) 
+![Display w/ Airline](assets/display_airline.png) 
+
+<p align="center">
+  <img src="assets/display_sprite.png" alt="Display w/ Sprite" width="48%" />
+  <img src="assets/display_airline.png" alt="Display w/ Airline" width="48%" />
+</p>
+
 Architecture
 
+
+Setup
 
 Remove pi's audio kernel mod - can't run matrix library without it 
 ```
