@@ -59,7 +59,6 @@ void render(std::stop_token st, Snapshot &snap, const Config &cfg, SQLite::Datab
     options.chain_length = 1;
     options.parallel = 1;
     options.limit_refresh_rate_hz = 300;
-    options.show_refresh_rate = true;
 
     rgb_matrix::RuntimeOptions runtime_opt;
     runtime_opt.gpio_slowdown = 5;
