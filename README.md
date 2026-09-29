@@ -24,6 +24,9 @@ FltCast is designed to work with an RTL-SDR and any ADS-B decoder that provides 
 - [Raspberry Pi 4](https://amzn.to/4xKLPBJ)
 - [WAGO 221-413 Lever Connectors](https://amzn.to/4z2amDs)
 
+## Build Guide
+
+A more detailed step-by-step build guide is currently in progress. If you'd like to be notified when it's available, you can [join the waitlist here](https://bytecadia.kit.com/4a5f30c81c).
 
 ## Setup
 
