@@ -94,7 +94,9 @@ void render(std::stop_token st, Snapshot &snap, const Config &cfg, SQLite::Datab
                               // every refresh
                               // I still need looping because of the scrolling but I
                               // don't need to make a new display data object if its
-                              // not any new data
+                              // not any new data.
+                              // Also when plane queue is cleaned in process thread at some
+                              // point an idle screen should show theres no new planes nearby
         // TODO: Create an idle screen?
 
         if (!a)
