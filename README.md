@@ -23,6 +23,7 @@ FltCast is designed to work with an RTL-SDR and any ADS-B decoder that provides 
 - [USB-C Pigtail Cables](https://amzn.to/4iXFlMl)
 - [Raspberry Pi 4](https://amzn.to/4xKLPBJ)
 - [WAGO 221-413 Lever Connectors](https://amzn.to/4z2amDs)
+- [Case STLs](case)
 
 ## Build Guide
 
@@ -183,6 +184,6 @@ These values may need to be changed in source code depending on the matrix hardw
 
 ## AI Usage
 
-This project was written entirely by hand, with the exception of a few small utility functions. I spent weeks architecting the program from end to end before writing it. AI assistance was occasionally used to answer questions or help diagnose trivial compilation errors, but the architecture, design decisions, and implementation are my own.
+This project was written entirely by hand, with the exception of a few small utility functions. I spent weeks architecting the program from end to end before writing it. 
 
 So if the code is bad, that's all me :)
