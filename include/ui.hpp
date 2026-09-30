@@ -21,7 +21,7 @@ enum class Mode
 struct Element
 {
     Mode mode; // TODO: These fields left unused?
-    int gap;   // TODO: These fields left unused?
+    int gap;
     std::vector<Text> items;
 };
 
