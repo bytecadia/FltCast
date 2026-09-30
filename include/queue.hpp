@@ -86,6 +86,4 @@ public:
         std::lock_guard<std::mutex> lock(_mtx);
         return _q.empty();
     }
-
-    // TODO: do i need size()
 };
