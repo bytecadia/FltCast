@@ -16,7 +16,7 @@ struct DisplayLayout
     int row_gap;
     int img_span;
 
-    DisplayLayout(const DisplayData &data,
+    DisplayLayout(const std::vector<DisplayData> &data,
                   const rgb_matrix::Font &sml,
                   const rgb_matrix::Font &med, const rgb_matrix::Font &lrg, int x, int y, int w, int h, int padding, int row_gap, int img_span);
 };
@@ -42,4 +42,3 @@ std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w, Element &elm
 std::pair<int, int> rght_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest);
 std::pair<int, int> lft_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest);
 std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_t time);
-std::vector<Position> layout(const DisplayLayout &disp, int64_t time, Image img);

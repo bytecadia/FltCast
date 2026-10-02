@@ -5,22 +5,23 @@
 
 #include "aircraft.hpp"
 
+template <typename T>
 class Snapshot
 {
 private:
-    std::optional<Aircraft> _a;
+    T _v;
     mutable std::mutex _mtx;
 
 public:
-    void write(Aircraft a)
+    void write(T a)
     {
         std::lock_guard<std::mutex> lock(_mtx);
-        _a = std::move(a);
+        _v = std::move(a);
     }
 
-    std::optional<Aircraft> read() const
+    T read() const
     {
         std::lock_guard<std::mutex> lock(_mtx);
-        return _a;
+        return _v;
     }
 };

@@ -10,36 +10,34 @@
 #include "layout.hpp"
 #include "geometry.hpp"
 
-DisplayLayout::DisplayLayout(const DisplayData &data,
+DisplayLayout::DisplayLayout(const std::vector<DisplayData> &data,
                              const rgb_matrix::Font &sml,
                              const rgb_matrix::Font &med, const rgb_matrix::Font &lrg, int x, int y, int w, int h, int padding, int row_gap, int img_span)
     : content(x, y, w, h), row_gap(row_gap), img_span(img_span)
 {
     rows.push_back(Row{
         Mode::Scroll,
-        {Element{Mode::Scroll, 0, {Text{data.header, &lrg, &RED}}}},
+        {Element{Mode::Fit, 0, {Text{"TRK", &lrg, &ORANGE}, Text{"ID", &lrg, &ORANGE}}},
+         Element{Mode::Fit, 0, {Text{"DIST", &lrg, &GREY}}}},
         lrg.height(), // TODO: Made it largest font height for now, should be good?
         0});
 
+    for (std::size_t i = 0; i < data.size(); i++)
+    {
+        auto &d = data[i];
+        rows.push_back(Row{
+            Mode::Scroll,
+            {Element{Mode::Fit, 0, {Text{std::format("{:02}", i), &lrg, &GREY}, Text{d.sub_header, &lrg, i == 0 ? &ORANGE : &WHITE}}},
+             Element{Mode::Fit, 0, {Text{std::to_string(d.distance), &lrg, &GREY}}}},
+            lrg.height(),
+            0});
+    }
+
     rows.push_back(Row{
-        Mode::Clip,
-        {Element{Mode::Clip, 0, {Text{data.sub_header, &sml, &RED}}}}, // TODO: Mode unused in element
+        Mode::Scroll,
+        {Element{Mode::Fit, 0, {Text{"SCAN", &lrg, &ORANGE}, Text{"20:08:53", &lrg, &ORANGE}}}},
         lrg.height(),
         0});
-
-    rows.push_back(Row{
-        Mode::Fit,
-        {Element{Mode::Fit, 2, {Text{std::to_string(data.speed), &sml, &BLUE}, Text{"mph", &sml, &LIGHT_BLUE}}},
-         Element{Mode::Fit, 2, {Text{std::to_string(data.alt), &sml, &BLUE}, Text{"ft", &sml, &LIGHT_BLUE}}}},
-        lrg.height(),
-        2});
-
-    rows.push_back(Row{
-        Mode::Clip,
-        {Element{Mode::Fit, 2, {Text{std::to_string(data.distance), &med, &YELLOW}, Text{"mi", &sml, &LIGHT_YELLOW}}},
-         Element{Mode::Fit, 0, {Text{cardinal_dir(data.bearing), &med, &YELLOW}, Text{"·", &sml, &YELLOW}, Text{std::to_string(data.track), &med, &YELLOW}, Text{"°", &sml, &LIGHT_YELLOW}}}},
-        lrg.height(),
-        2});
 
     content.inset(padding);
 }
@@ -127,35 +125,6 @@ std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_
         pos.insert(pos.end(), np.begin(), np.end());
         x += w + row.gap;
     }
-
-    return pos;
-}
-
-std::vector<Position> layout(const DisplayLayout &disp, int64_t time, Image img)
-{
-    const int y1 = disp.rows[0].h;
-    const int y2 = y1 + disp.rows[1].h + disp.row_gap;
-    const int y4 = disp.content.btm();
-    const int y3 = y4 - disp.rows[3].h - disp.row_gap;
-
-    const int x = disp.content.lft();
-    const int x1 = (1 <= disp.img_span) ? x + 1 + img.w : x; // TODO: Fix this hardcoded gap here
-    const int x2 = (2 <= disp.img_span) ? x + 1 + img.w : x;
-    const int x3 = (3 <= disp.img_span) ? x + 1 + img.w : x;
-    const int x4 = (4 <= disp.img_span) ? x + 1 + img.w : x;
-
-    std::vector<Position> pos, row_pos;
-
-    auto add_row = [&](int x, int y, int i)
-    {
-        auto row = lay_row(x, y, x, disp.content.rght(), disp.rows[i], time);
-        pos.insert(pos.end(), row.begin(), row.end());
-    };
-
-    add_row(x1, y1, 0);
-    add_row(x2, y2, 1);
-    add_row(x3, y3, 2);
-    add_row(x4, y4, 3);
 
     return pos;
 }

@@ -86,4 +86,10 @@ public:
         std::lock_guard<std::mutex> lock(_mtx);
         return _q.empty();
     }
+
+    int size() const
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        return _q.size();
+    }
 };

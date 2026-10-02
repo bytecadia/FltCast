@@ -18,10 +18,17 @@ struct Config
 
     int cols;
     int rows;
+    int chain_length;
+    int parallel;
+    std::string pixel_mapper;
+    int limit_refresh;
+    int gpio_slowdown;
     int padding;
     int row_gap;
     int img_span;
     int img_h;
+
+    double range;
 };
 
 inline Config parse_cfg(std::string path)
@@ -61,10 +68,17 @@ inline Config parse_cfg(std::string path)
 
     config.rows = static_cast<int>(getReal("matrix", "rows", 32));
     config.cols = static_cast<int>(getReal("matrix", "cols", 64));
+    config.chain_length = static_cast<int>(getReal("matrix", "chain_length", 1));
+    config.parallel = static_cast<int>(getReal("matrix", "parallel", 1));
+    config.limit_refresh = static_cast<int>(getReal("matrix", "limit_refresh", 300));
+    config.gpio_slowdown = static_cast<int>(getReal("matrix", "gpio_slowdown", 5));
+    config.pixel_mapper = get("matrix", "pixel_mapper", "U-mapper");
     config.padding = static_cast<int>(getReal("matrix", "padding", 2));
     config.row_gap = static_cast<int>(getReal("matrix", "row_gap", 2));
     config.img_span = static_cast<int>(getReal("matrix", "img_span", 2));
     config.img_h = static_cast<int>(getReal("matrix", "img_height", 64));
+
+    config.range = getReal("radar", "range", 1000);
 
     return config;
 }

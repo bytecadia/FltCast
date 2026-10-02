@@ -19,13 +19,16 @@ using namespace std::chrono_literals;
 
 void process(std::stop_token st,
              TSQueue<std::string> &msg_q,
-             Snapshot &snapshot,
+             Snapshot<std::vector<DisplayData>> &snapshot,
+             Snapshot<int> &msg_rate,
              SQLite::Database &db,
              const Config &cfg)
 {
     std::map<std::string, Aircraft> aircrafts;
-    auto deadline = std::chrono::steady_clock::now() + 30s;
+    auto deadline = std::chrono::steady_clock::now() + 1s;
 
+    int msgs = 0;
+    auto last = std::chrono::steady_clock::now();
     while (!st.stop_requested())
     {
         std::optional<std::string> msg = msg_q.pop_until(st, deadline);
@@ -44,6 +47,7 @@ void process(std::stop_token st,
                 it->second.parse_msg(fields);
                 it->second.last_seen = std::chrono::steady_clock::now();
             }
+            ++msgs;
         }
 
         // Maintenance
@@ -58,28 +62,41 @@ void process(std::stop_token st,
                 else
                     ++it;
             }
+            deadline = now + 1s;
 
-            deadline = now + 30s;
-            if (aircrafts.empty()) // TODO: What should UI show here?
-                continue;
-
-            // Select featured aircraft
-            Aircraft *featured = nullptr;
-            double closest = 0;
+            std::vector<DisplayData> featured;
             for (auto &[icao, a] : aircrafts)
             {
-                if (!a.lat || !a.lon)
-                    continue;
-
-                double distance = calc_dist(cfg.lat, cfg.lon, *a.lat, *a.lon);
-                if (!featured || distance < closest)
-                {
-                    closest = distance;
-                    featured = &a;
-                }
+                DisplayData d{db, a, cfg};
+                if (a.lat && a.lon && d.distance <= cfg.range)
+                    featured.emplace_back(d);
             }
-            if (featured)
-                snapshot.write(*featured);
+            std::ranges::sort(featured, {}, &DisplayData::distance);
+
+            snapshot.write(featured);
+
+            msg_rate.write(static_cast<int>(msgs / std::chrono::duration<double>(now - last).count()));
         }
     }
+}
+
+// TODO: Not used now, will be in future update
+Aircraft get_closest(std::map<std::string, Aircraft> aircrafts, Config cfg)
+{
+    Aircraft *featured = nullptr;
+    double closest = 0;
+    for (auto &[icao, a] : aircrafts)
+    {
+        if (!a.lat || !a.lon)
+            continue;
+
+        double distance = calc_dist(cfg.lat, cfg.lon, *a.lat, *a.lon);
+        if (!featured || distance < closest)
+        {
+            closest = distance;
+            featured = &a;
+        }
+    }
+
+    return *featured;
 }
