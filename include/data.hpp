@@ -181,10 +181,10 @@ struct DisplayData
         if (!a.callsign.empty())
             sub_header = trim(a.callsign);
 
-        alt = *a.alt;
-        speed = *a.gs;
+        alt = a.alt.value_or(0);
+        speed = a.gs.value_or(0);
         distance = static_cast<int>(calc_dist(cfg.lat, cfg.lon, *a.lat, *a.lon));
-        track = *a.trk;
+        track = a.trk.value_or(0);
         bearing = static_cast<int>(calc_bearing(cfg.lat, cfg.lon, *a.lat, *a.lon));
     }
 };

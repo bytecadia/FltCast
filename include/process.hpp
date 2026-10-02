@@ -9,9 +9,10 @@
 #include "config.hpp"
 #include "queue.hpp"
 #include "snapshot.hpp"
+#include "data.hpp"
 
 void process(std::stop_token st,
              TSQueue<std::string> &msg_q,
-             Snapshot &snapshot,
+             Snapshot<std::vector<DisplayData>> &snapshot,
              SQLite::Database &db,
              const Config &cfg);

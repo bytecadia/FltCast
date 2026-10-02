@@ -13,6 +13,7 @@
 #include "process.hpp"
 #include "snapshot.hpp"
 #include "render.hpp"
+#include "data.hpp"
 
 int main()
 {
@@ -38,14 +39,14 @@ int main()
     Config cfg = parse_cfg(CONFIG_PATH);
 
     TSQueue<std::string> msg_q;
-    Snapshot snapshot;
+    Snapshot<std::vector<DisplayData>> snapshot;
 
     std::vector<std::jthread> threads;
 
     std::stop_source stp_src;
     threads.emplace_back(socket_reader, stp_src.get_token(), std::ref(msg_q), cfg); // config read only
     threads.emplace_back(process, stp_src.get_token(), std::ref(msg_q), std::ref(snapshot), std::ref(*db), std::cref(cfg));
-    threads.emplace_back(render, stp_src.get_token(), std::ref(snapshot), std::cref(cfg), std::ref(*db));
+    threads.emplace_back(render, stp_src.get_token(), std::ref(snapshot), std::cref(cfg));
 
     int sig;
     sigwait(&s, &sig);
