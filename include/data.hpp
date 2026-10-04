@@ -151,11 +151,18 @@ struct DisplayData
     std::string header; // Airline or manufacturer - this is why database is needed
     std::string img_path;
     std::string sub_header;
+    std::string icao;
+    std::string model;
+    std::string sprite_path;
     int alt;
     int speed;
     int distance;
     int bearing;
     int track;
+    int vs;
+    double bank;
+    double pitch;
+    std::vector<int> alt_hist;
 
     // TODO: Need to add check to process.cpp to ensure below is true
     DisplayData(SQLite::Database &db, const Aircraft &a,
@@ -186,5 +193,12 @@ struct DisplayData
         distance = static_cast<int>(calc_dist(cfg.lat, cfg.lon, *a.lat, *a.lon));
         track = a.trk.value_or(0);
         bearing = static_cast<int>(calc_bearing(cfg.lat, cfg.lon, *a.lat, *a.lon));
+        icao = a.icao;
+        model = info.mdl;
+        sprite_path = std::format("{}/sprites/{}.png", ASSETS_PATH, to_str(info.type));
+        vs = a.vs.value_or(0);
+        bank = a.bank;
+        pitch = speed > 0 ? std::atan(vs * 0.00508 / (speed * 0.514444)) * 180 / std::numbers::pi : 0;
+        alt_hist.assign(a.alt_hist.begin(), a.alt_hist.end());
     }
 };

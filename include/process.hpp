@@ -14,6 +14,5 @@
 void process(std::stop_token st,
              TSQueue<std::string> &msg_q,
              Snapshot<std::vector<DisplayData>> &snapshot,
-             Snapshot<int> &msg_rate,
              SQLite::Database &db,
              const Config &cfg);

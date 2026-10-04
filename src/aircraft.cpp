@@ -1,9 +1,12 @@
+#include <algorithm>
+#include <cmath>
 #include <ranges>
 #include <utility>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ranges.h>
 
 #include "aircraft.hpp"
+#include "geometry.hpp"
 #include "strings.hpp"
 
 Aircraft::Aircraft(std::string icao) : icao(icao) {};
@@ -41,6 +44,7 @@ bool Aircraft::parse_msg(const std::vector<std::string> &msg)
     case 4:
         gs = parse_num<int>(msg[12]);
         trk = parse_num<int>(msg[13]);
+        vs = parse_num<int>(msg[16]);
         break;
     case 5:
         alt = parse_num<int>(msg[11]);
@@ -62,4 +66,25 @@ bool Aircraft::parse_msg(const std::vector<std::string> &msg)
         return false;
     }
     return true;
+}
+
+void Aircraft::tick(double t)
+{
+    if (alt)
+    {
+        alt_hist.push_back(*alt);
+        if (alt_hist.size() > 64)
+            alt_hist.pop_front();
+    }
+
+    // ADS-B has no roll, so estimate it from how fast the track is turning: tan(bank) = v * w / g
+    if (trk && gs && last_trk && t > 0)
+    {
+        double turn = std::remainder(*trk - *last_trk, 360.0); // Shortest way round, -180..180
+        double v = *gs * 0.514444;                             // kt -> m/s
+        double w = rads(turn) / t;                             // rad/s
+        double b = std::clamp(std::atan(v * w / 9.81) * 180 / std::numbers::pi, -45.0, 45.0);
+        bank = bank * 0.7 + b * 0.3; // ponytail: smoothing factor, tune on real traffic
+    }
+    last_trk = trk;
 }

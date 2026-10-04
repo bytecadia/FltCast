@@ -20,15 +20,13 @@ using namespace std::chrono_literals;
 void process(std::stop_token st,
              TSQueue<std::string> &msg_q,
              Snapshot<std::vector<DisplayData>> &snapshot,
-             Snapshot<int> &msg_rate,
              SQLite::Database &db,
              const Config &cfg)
 {
     std::map<std::string, Aircraft> aircrafts;
     auto deadline = std::chrono::steady_clock::now() + 1s;
 
-    int msgs = 0;
-    auto last = std::chrono::steady_clock::now();
+    auto last_tick = std::chrono::steady_clock::now();
     while (!st.stop_requested())
     {
         std::optional<std::string> msg = msg_q.pop_until(st, deadline);
@@ -47,7 +45,6 @@ void process(std::stop_token st,
                 it->second.parse_msg(fields);
                 it->second.last_seen = std::chrono::steady_clock::now();
             }
-            ++msgs;
         }
 
         // Maintenance
@@ -64,6 +61,11 @@ void process(std::stop_token st,
             }
             deadline = now + 1s;
 
+            double dt = std::chrono::duration<double>(now - last_tick).count();
+            last_tick = now;
+            for (auto &[icao, a] : aircrafts)
+                a.tick(dt);
+
             std::vector<DisplayData> featured;
             for (auto &[icao, a] : aircrafts)
             {
@@ -74,8 +76,6 @@ void process(std::stop_token st,
             std::ranges::sort(featured, {}, &DisplayData::distance);
 
             snapshot.write(featured);
-
-            msg_rate.write(static_cast<int>(msgs / std::chrono::duration<double>(now - last).count()));
         }
     }
 }
