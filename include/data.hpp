@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+#include <format>
 #include <ranges>
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <spdlog/spdlog.h>
@@ -76,6 +78,61 @@ inline AircraftType get_type(int type, int engine)
     }
 
     return AircraftType::Unk;
+}
+
+// Sprites are made with ft/tools/sprite_maker (outside the repo)
+// FAA spells every variant differently (737-823, 737-7H4) so match on prefixes - first match wins
+struct SpriteFamily
+{
+    const char *mfc;  // Manufacturer starts with
+    const char *mdl;  // Model starts with
+    const char *name; // assets/sprites/<name>.png
+};
+
+inline constexpr SpriteFamily SPRITE_FAMILIES[] = {
+    {"BOEING", "737", "b737"},
+    {"BOEING", "757", "b757"},
+    {"BOEING", "767", "b767"},
+    {"BOEING", "777", "b777"},
+    {"BOEING", "787", "b787"},
+    {"AIRBUS", "A31", "a320"}, // A318, A319
+    {"AIRBUS", "A32", "a320"}, // A320, A321
+    {"AIRBUS", "A33", "a330"},
+    {"AIRBUS", "A35", "a350"},
+    {"AIRBUS", "BD-500", "a220"},
+    {"EMBRAER", "ERJ 170", "e175"},
+    {"EMBRAER", "ERJ 190", "e190"},
+    {"EMBRAER", "EMB-145", "erj145"},
+    {"LEARJET", "", "learjet"},         // Every Learjet model
+    {"GATES LEARJET", "", "learjet"},   // Older Learjets are registered under Gates
+    {"BOMBARDIER", "CL-600-2C", "crj"}, // CRJ700 (CL-600-2B16 is a Challenger business jet)
+    {"BOMBARDIER", "CL-600-2D", "crj"}, // CRJ900
+    {"CESSNA", "172", "c172"},
+    {"CESSNA", "152", "c172"}, // High-wing singles share one sprite
+    {"CESSNA", "182", "c172"},
+    {"PIPER", "PA-28", "pa28"},
+    {"CIRRUS", "SR2", "sr22"},
+    {"ROBINSON", "R44", "r44"},
+    {"ROBINSON", "R22", "r44"},
+};
+
+inline std::string sprite_for(const AircraftInfo &info)
+{
+    for (const auto &f : SPRITE_FAMILIES)
+    {
+        if (info.mfc.starts_with(f.mfc) && info.mdl.starts_with(f.mdl))
+        {
+            auto path = std::format("{}/sprites/{}.png", ASSETS_PATH, f.name);
+            if (std::filesystem::exists(path))
+                return path;
+            break;
+        }
+    }
+
+    // No family - use the most common model of the same kind (unknown is mostly foreign airliners)
+    const char *fallback = info.type == AircraftType::Prop ? "c172" : info.type == AircraftType::Heli ? "r44"
+                                                                                                      : "b737";
+    return std::format("{}/sprites/{}.png", ASSETS_PATH, fallback);
 }
 
 // TODO: Should this be returning optional, does it make sense for partials here
@@ -171,7 +228,8 @@ struct DisplayData
         auto [code, airline] = lookup_airline(db, a.callsign);
         AircraftInfo info = lookup_aircraft(db, a.icao);
 
-        img_path = std::format("{}/sprites/{}.png", ASSETS_PATH, to_str(info.type));
+        sprite_path = sprite_for(info);
+        img_path = sprite_path;
 
         if (!airline.empty())
         {
@@ -195,7 +253,6 @@ struct DisplayData
         bearing = static_cast<int>(calc_bearing(cfg.lat, cfg.lon, *a.lat, *a.lon));
         icao = a.icao;
         model = info.mdl;
-        sprite_path = std::format("{}/sprites/{}.png", ASSETS_PATH, to_str(info.type));
         vs = a.vs.value_or(0);
         bank = a.bank;
         pitch = speed > 0 ? std::atan(vs * 0.00508 / (speed * 0.514444)) * 180 / std::numbers::pi : 0;

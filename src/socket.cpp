@@ -139,7 +139,6 @@ void socket_reader(std::stop_token st, TSQueue<std::string> &q, const Config &cf
     int fd;
 
     int attempt = 0;
-    auto prev_attempt = std::chrono::steady_clock::now();
     while (!st.stop_requested())
     {
         if (attempt > 0)

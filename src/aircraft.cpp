@@ -1,7 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <ranges>
-#include <utility>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ranges.h>
 
@@ -77,14 +75,14 @@ void Aircraft::tick(double t)
             alt_hist.pop_front();
     }
 
-    // ADS-B has no roll, so estimate it from how fast the track is turning: tan(bank) = v * w / g
+    // ADS-B has no roll so estimate it from turn rate -> tan(bank) = v * w / g
     if (trk && gs && last_trk && t > 0)
     {
-        double turn = std::remainder(*trk - *last_trk, 360.0); // Shortest way round, -180..180
-        double v = *gs * 0.514444;                             // kt -> m/s
-        double w = rads(turn) / t;                             // rad/s
+        double turn = std::remainder(*trk - *last_trk, 360.0); // Shortest way round (-180 to 180)
+        double v = *gs * 0.514444;                             // Knots to m/s
+        double w = rads(turn) / t;                             // Rad/s
         double b = std::clamp(std::atan(v * w / 9.81) * 180 / std::numbers::pi, -45.0, 45.0);
-        bank = bank * 0.7 + b * 0.3; // ponytail: smoothing factor, tune on real traffic
+        bank = bank * 0.7 + b * 0.3; // TODO: Tune smoothing on real traffic
     }
     last_trk = trk;
 }

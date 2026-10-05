@@ -5,11 +5,12 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
-#include "layout.hpp"
+#include "ui.hpp"
 #include "image.hpp"
 #include "canvas.hpp"
 #include "render.hpp"
 #include "colors.hpp"
+#include "painter.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -36,21 +37,7 @@ void draw_positions(const std::vector<Position> &positions, Canvas &canvas)
 // TODO: Pass in a rect
 void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int w, int h, long elapsed)
 {
-    auto *m = c.GetRGBMatrix();
-
-    // Helpers
-    auto px = [&](int x, int y, const rgb_matrix::Color &col)
-    {
-        m->SetPixel(x, y, col.r, col.g, col.b);
-    };
-
-    // Dotted line
-    auto dotted = [&](int x0, int y0, int x1, int y1, const rgb_matrix::Color &col)
-    {
-        int n = std::max({std::abs(x1 - x0), std::abs(y1 - y0), 1});
-        for (int i = 0; i <= n; i += 2)
-            px(x0 + std::lround(double(x1 - x0) * i / n), y0 + std::lround(double(y1 - y0) * i / n), col);
-    };
+    Painter p{c.GetRGBMatrix()};
 
     int cx = w / 2;
     int cy = h / 2;
@@ -60,23 +47,23 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
     const int corners[4][4] = {{0, 0, 1, 1}, {w - 1, 0, -1, 1}, {0, h - 1, 1, -1}, {w - 1, h - 1, -1, -1}};
     for (auto &k : corners)
     {
-        rgb_matrix::DrawLine(m, k[0], k[1], k[0] + 3 * k[2], k[1], MID);
-        rgb_matrix::DrawLine(m, k[0], k[1], k[0], k[1] + 3 * k[3], MID);
+        p.line(k[0], k[1], k[0] + 3 * k[2], k[1], MID);
+        p.line(k[0], k[1], k[0], k[1] + 3 * k[3], MID);
     }
-    dotted(3, 0, w - 5, 0, FRAME);
-    dotted(0, 3, 0, h - 5, FRAME);
-    dotted(4, h - 1, w - 5, h - 1, FRAME);
-    dotted(w - 1, 4, w - 1, h - 4, RING);
-    rgb_matrix::DrawLine(m, cx, 0, cx, 1, WHITE);
+    p.dotted(3, 0, w - 5, 0, FRAME);
+    p.dotted(0, 3, 0, h - 5, FRAME);
+    p.dotted(4, h - 1, w - 5, h - 1, FRAME);
+    p.dotted(w - 1, 4, w - 1, h - 4, RING);
+    p.line(cx, 0, cx, 1, WHITE);
 
     // Rings
-    rgb_matrix::DrawCircle(m, cx, cy, radius / 3, RING);
-    rgb_matrix::DrawCircle(m, cx, cy, (2 * radius) / 3, RING);
-    rgb_matrix::DrawCircle(m, cx, cy, radius, MID);
+    p.circle(cx, cy, radius / 3, RING);
+    p.circle(cx, cy, (2 * radius) / 3, RING);
+    p.circle(cx, cy, radius, MID);
 
     // Crosshairs
-    dotted(2, cy, w - 2, cy, GRID);
-    dotted(cx, 2, cx, h - 2, GRID);
+    p.dotted(2, cy, w - 2, cy, GRID);
+    p.dotted(cx, 2, cx, h - 2, GRID);
 
     // Sweep
     const rgb_matrix::Color *trail[] = {&RING, &GRID, &SWEEP};
@@ -84,7 +71,7 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
     for (int i = 0; i < 3; i++)
     {
         double ta = a - (2 - i) * rads(5);
-        rgb_matrix::DrawLine(m, cx, cy, cx + std::lround(radius * std::sin(ta)), cy - std::lround(radius * std::cos(ta)), *trail[i]);
+        p.line(cx, cy, cx + std::lround(radius * std::sin(ta)), cy - std::lround(radius * std::cos(ta)), *trail[i]);
     }
 
     // Featured aircraft
@@ -105,7 +92,7 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
 
         auto t = rads(d.track);
         for (int k = 1; k <= (i == featured ? 1 : 2); k++)
-            px(x - std::lround(k * std::sin(t)), y + std::lround(k * std::cos(t)), i == featured ? ORANGE_TAIL : GRID);
+            p.px(x - std::lround(k * std::sin(t)), y + std::lround(k * std::cos(t)), i == featured ? ORANGE_TAIL : GRID);
     }
 
     // Leader line
@@ -113,12 +100,12 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
     {
         auto [fx, fy] = pos[featured];
         int row_y = 13 + 9 * static_cast<int>(featured); // Middle of the row in draw_planes
-        dotted(fx, fy, w, row_y, LEADER);
-        rgb_matrix::DrawLine(m, w - 1, row_y - 1, w - 1, row_y, GREY);
+        p.dotted(fx, fy, w, row_y, LEADER);
+        p.line(w - 1, row_y - 1, w - 1, row_y, GREY);
     }
 
     for (std::size_t i = 0; i < pos.size(); i++)
-        px(pos[i].first, pos[i].second, i == featured ? ORANGE : WHITE);
+        p.px(pos[i].first, pos[i].second, i == featured ? ORANGE : WHITE);
 
     // Spotlight brackets
     if (!data.empty())
@@ -128,50 +115,40 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
             for (int sy : {-1, 1})
             {
                 int x = fx + 3 * sx, y = fy + 3 * sy;
-                rgb_matrix::DrawLine(m, x, y, x - sx, y, ORANGE);
-                rgb_matrix::DrawLine(m, x, y, x, y - sy, ORANGE);
+                p.line(x, y, x - sx, y, ORANGE);
+                p.line(x, y, x, y - sy, ORANGE);
             }
     }
 
     // Center
-    rgb_matrix::DrawLine(m, cx - 2, cy, cx + 2, cy, GREY);
-    rgb_matrix::DrawLine(m, cx, cy - 2, cx, cy + 2, GREY);
+    p.line(cx - 2, cy, cx + 2, cy, GREY);
+    p.line(cx, cy - 2, cx, cy + 2, GREY);
 }
 
 void draw_planes(Canvas &c, const std::vector<DisplayData> &data, const rgb_matrix::Font &lrg,
                  const rgb_matrix::Font &sml, Rect content, long elapsed)
 {
-    auto *m = c.GetRGBMatrix();
-
-    // Helpers
-    auto text = [&](const rgb_matrix::Font &f, int x, int y, const rgb_matrix::Color &col, const std::string &s)
-    {
-        rgb_matrix::DrawText(m, f, x, y, col, s.c_str());
-    };
-
-    auto right = [&](const rgb_matrix::Font &f, int y, const rgb_matrix::Color &col, const std::string &s)
-    {
-        text(f, content.rght() + 1 - rgb_matrix::MeasureText(f, s.c_str()), y, col, s);
-    };
+    Painter p{c.GetRGBMatrix()};
 
     int lft = content.lft();
+    int rgt = content.rght() - 1; // Last column inside the padding
     int cs_x = lft + 14; // Callsign column
 
     // Baselines
     int head_y = content.tp() + sml.baseline();
-    int foot_y = content.btm(); // Descender row is blank for digits, so it can sit in the padding
+    int foot_y = content.btm(); // Digits have no descender so it can sit in the padding
 
     // Dividers
     int top_div = head_y + 1;
     int btm_div = foot_y - sml.baseline() - 3;
 
     // Header
-    text(sml, lft, head_y, MID, "TRK");
-    text(sml, cs_x, head_y, GREY, "ID");
-    right(sml, head_y, MID, "MI");
+    p.text(sml, lft, head_y, MID, "TRK");
+    p.text(sml, cs_x, head_y, GREY, "ID");
+    p.right(sml, rgt, head_y, MID, "MI");
 
     // Divider
-    rgb_matrix::DrawLine(m, lft, top_div, content.rght() - 1, top_div, GRID);
+    p.line(lft, top_div, rgt, top_div, GRID);
 
     // Planes
     int step = 9;
@@ -185,80 +162,39 @@ void draw_planes(Canvas &c, const std::vector<DisplayData> &data, const rgb_matr
     {
         const auto &d = data[i];
         bool f = i == featured;
-        text(sml, lft + 1, y, f ? ORANGE_DIM : MID, std::format("{:02}", i + 1));
-        text(lrg, cs_x, y, f ? ORANGE : WHITE, d.sub_header);
-        right(sml, y, MID, std::to_string(d.distance));
+        p.text(sml, lft + 1, y, f ? ORANGE_DIM : MID, std::format("{:02}", i + 1));
+        p.text(lrg, cs_x, y, f ? ORANGE : WHITE, d.sub_header);
+        p.right(sml, rgt, y, MID, std::to_string(d.distance));
     }
 
     // Divider
-    rgb_matrix::DrawLine(m, lft, btm_div, content.rght() - 1, btm_div, GRID);
+    p.line(lft, btm_div, rgt, btm_div, GRID);
 
     // Footer
-    text(sml, lft + 1, foot_y, ORANGE, "LIVE");
+    p.text(sml, lft + 1, foot_y, ORANGE, "LIVE");
     if ((elapsed / 500) % 2 == 0) // Flashing dot
-    {
-        rgb_matrix::DrawLine(m, lft + 19, foot_y - 3, lft + 20, foot_y - 3, LIVE);
-        rgb_matrix::DrawLine(m, lft + 19, foot_y - 2, lft + 20, foot_y - 2, LIVE);
-    }
+        p.fill(lft + 19, foot_y - 3, 2, 2, LIVE);
 
     char clock[6];
     std::time_t now = std::time(nullptr);
     std::strftime(clock, sizeof clock, "%H:%M", std::localtime(&now));
-    right(sml, foot_y, MID, clock);
+    p.right(sml, rgt, foot_y, MID, clock);
 }
 
 void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_matrix::Font &med,
                   const rgb_matrix::Font &sml, const std::optional<Image> &icon)
 {
-    auto *m = c.GetRGBMatrix();
+    Painter p{c.GetRGBMatrix()};
     const rgb_matrix::Color off;
 
-    // Helpers
-    auto px = [&](int x, int y, const rgb_matrix::Color &col)
-    {
-        m->SetPixel(x, y, col.r, col.g, col.b);
-    };
-    auto text = [&](const rgb_matrix::Font &f, int x, int y, const rgb_matrix::Color &col, const std::string &s)
-    {
-        return rgb_matrix::DrawText(m, f, x, y, col, s.c_str());
-    };
-    auto right = [&](const rgb_matrix::Font &f, int xr, int y, const rgb_matrix::Color &col, const std::string &s)
-    {
-        text(f, xr + 1 - rgb_matrix::MeasureText(f, s.c_str()), y, col, s);
-    };
-    auto fill = [&](int x, int y, int w, int h, const rgb_matrix::Color &col)
-    {
-        for (int iy = y; iy < y + h; iy++)
-            rgb_matrix::DrawLine(m, x, iy, x + w - 1, iy, col);
-    };
-
-    auto panel = [&](int x0, int y0, int x1, int y1, const std::string &title, const rgb_matrix::Color &tcol)
-    {
-        int tx = x0 + 4;
-        rgb_matrix::DrawLine(m, x0 + 1, y0, x0 + 2, y0, GRID);
-        rgb_matrix::DrawLine(m, tx + rgb_matrix::MeasureText(sml, title.c_str()) + 1, y0, x1 - 1, y0, GRID);
-        rgb_matrix::DrawLine(m, x0, y0 + 1, x0, y1 - 1, GRID);
-        rgb_matrix::DrawLine(m, x1, y0 + 1, x1, y1 - 1, GRID);
-        rgb_matrix::DrawLine(m, x0 + 1, y1, x1 - 1, y1, GRID);
-        text(sml, tx, y0 + 3, tcol, title);
-    };
-
-    auto meter = [&](int x0, int x1, int y, double frac)
-    {
-        int n = (x1 - x0 + 2) / 3;
-        int lit = std::lround(std::clamp(frac, 0.0, 1.0) * n);
-        for (int i = 0; i < n; i++)
-            fill(x0 + 3 * i, y, 2, 3, i < lit ? GREY : RING);
-    };
-
     // Header bar
-    fill(0, 0, c.width(), 7, ORANGE);
-    text(sml, 2, 6, off, std::format("NEAREST // 1 OF {}", count));
+    p.fill(0, 0, c.width(), 7, ORANGE);
+    p.text(sml, 2, 6, off, std::format("NEAREST // 1 OF {}", count));
     for (int i = 0; i < 4; i++)
-        fill(113 + 3 * i, 4 - i, 2, 2 + i, off); // TODO: Signal bars decoration
+        p.fill(113 + 3 * i, 4 - i, 2, 2 + i, off); // TODO: Signal bars decoration
 
     // Aircraft panel
-    panel(0, 10, 55, 63, d.sub_header, ORANGE);
+    p.panel(0, 10, 55, 63, sml, d.sub_header, ORANGE);
     if (icon)
     {
         static const int bayer[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
@@ -269,27 +205,27 @@ void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_
                 int a = icon->pixels[(iy * icon->w + ix) * 4 + 3];
                 int x = x0 + ix, y = 13 + iy;
                 if (a * 0.6 * 16 / 255 > bayer[(y & 3) * 4 + (x & 3)])
-                    px(x, y, WHITE);
+                    p.px(x, y, WHITE);
                 else if (a > 128)
-                    px(x, y, MID);
+                    p.px(x, y, MID);
             }
     }
 
     std::string airline = d.header.substr(0, d.header.find(' '));
     std::ranges::transform(airline, airline.begin(), [](unsigned char ch)
                            { return std::toupper(ch); });
-    text(med, 3, 48, WHITE, airline.substr(0, 12));
-    text(sml, 3, 56, MID, "TYPE");
-    right(sml, 53, 56, WHITE, d.model.substr(0, 8));
-    text(sml, 3, 62, MID, "ICAO");
-    right(sml, 53, 62, WHITE, d.icao);
+    p.text(med, 3, 48, WHITE, airline.substr(0, 12));
+    p.text(sml, 3, 56, MID, "TYPE");
+    p.right(sml, 53, 56, WHITE, d.model.substr(0, 8));
+    p.text(sml, 3, 62, MID, "ICAO");
+    p.right(sml, 53, 62, WHITE, d.icao);
 
     // Altitude panel
-    panel(58, 10, 127, 34, "ALT", MID);
-    int adv = text(med, 61, 20, WHITE, std::to_string(d.alt));
-    text(sml, 61 + adv + 1, 20, MID, "FT");
-    right(sml, 125, 20, MID, std::format("FL{:03}", d.alt / 100));
-    meter(61, 124, 21, d.alt / 45000.0);
+    p.panel(58, 10, 127, 34, sml, "ALT", MID);
+    int adv = p.text(med, 61, 20, WHITE, std::to_string(d.alt));
+    p.text(sml, 61 + adv + 1, 20, MID, "FT");
+    p.right(sml, 125, 20, MID, std::format("FL{:03}", d.alt / 100));
+    p.meter(61, 124, 21, d.alt / 45000.0);
 
     // Altitude history
     if (!d.alt_hist.empty())
@@ -302,36 +238,36 @@ void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_
             int h = 1 + std::lround((v - lo) / span * 6);
             ++x;
             if (h > 1)
-                rgb_matrix::DrawLine(m, x, 32, x, 32 - h + 2, GRID);
-            px(x, 32 - h + 1, MID);
+                p.line(x, 32, x, 32 - h + 2, GRID);
+            p.px(x, 32 - h + 1, MID);
         }
     }
 
     // Navigation panel
-    panel(58, 38, 127, 63, "NAV", MID);
+    p.panel(58, 38, 127, 63, sml, "NAV", MID);
 
     // Artificial horizon
     int cx = 70, cy = 51, r = 10;
     double b = rads(d.bank);
-    double p = std::clamp(d.pitch / 2.5, -6.0, 6.0);
+    double pitch = std::clamp(d.pitch / 2.5, -6.0, 6.0);
     for (int y = cy - r; y <= cy + r; y++)
         for (int x = cx - r; x <= cx + r; x++)
         {
             if (std::hypot(x - cx, y - cy) > r - 0.6)
                 continue;
-            double s = (y - cy - p) * std::cos(b) + (x - cx) * std::sin(b);
+            double s = (y - cy - pitch) * std::cos(b) + (x - cx) * std::sin(b);
             if (std::abs(s) < 0.5)
-                px(x, y, WHITE);
+                p.px(x, y, WHITE);
             else if (s > 0 && (x + y) % 2 == 0)
-                px(x, y, GRID);
+                p.px(x, y, GRID);
         }
-    rgb_matrix::DrawCircle(m, cx, cy, r, MID);
+    p.circle(cx, cy, r, MID);
     for (int deg : {-30, 30}) // Roll scale
-        px(cx + std::lround((r + 1) * std::sin(rads(deg))), cy - std::lround((r + 1) * std::cos(rads(deg))), MID);
-    px(cx, cy - r - 1, WHITE);
-    rgb_matrix::DrawLine(m, cx - 7, cy, cx - 3, cy, ORANGE);
-    rgb_matrix::DrawLine(m, cx + 3, cy, cx + 7, cy, ORANGE);
-    px(cx, cy, ORANGE);
+        p.px(cx + std::lround((r + 1) * std::sin(rads(deg))), cy - std::lround((r + 1) * std::cos(rads(deg))), MID);
+    p.px(cx, cy - r - 1, WHITE);
+    p.line(cx - 7, cy, cx - 3, cy, ORANGE);
+    p.line(cx + 3, cy, cx + 7, cy, ORANGE);
+    p.px(cx, cy, ORANGE);
 
     // Heading tape
     int tx0 = 85, tx1 = 124, mid = (tx0 + tx1) / 2;
@@ -341,7 +277,7 @@ void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_
         if (x < tx0 || x > tx1)
             continue;
         bool major = (deg + 360) % 30 == 0;
-        rgb_matrix::DrawLine(m, x, major ? 46 : 47, x, 47, major ? MID : GRID);
+        p.line(x, major ? 46 : 47, x, 47, major ? MID : GRID);
         if (!major)
             continue;
         int h = (deg + 360) % 360;
@@ -352,16 +288,16 @@ void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_
         int w = rgb_matrix::MeasureText(sml, lab.c_str()) - 1;
         int lx = x - w / 2;
         if (lx >= tx0 && lx + w - 1 <= tx1)
-            text(sml, lx, 45, std::abs(x - mid) <= 2 ? WHITE : MID, lab);
+            p.text(sml, lx, 45, std::abs(x - mid) <= 2 ? WHITE : MID, lab);
     }
-    rgb_matrix::DrawLine(m, tx0, 48, tx1, 48, GRID);
-    px(mid, 49, ORANGE);
-    rgb_matrix::DrawLine(m, mid - 1, 50, mid + 1, 50, ORANGE);
+    p.line(tx0, 48, tx1, 48, GRID);
+    p.px(mid, 49, ORANGE);
+    p.line(mid - 1, 50, mid + 1, 50, ORANGE);
 
-    text(sml, tx0, 57, MID, "SPD");
-    right(sml, tx1, 57, WHITE, std::format("{}KT", d.speed));
-    text(sml, tx0, 63, MID, "VS");
-    right(sml, tx1, 63, WHITE, std::format("{:+}", d.vs));
+    p.text(sml, tx0, 57, MID, "SPD");
+    p.right(sml, tx1, 57, WHITE, std::format("{}KT", d.speed));
+    p.text(sml, tx0, 63, MID, "VS");
+    p.right(sml, tx1, 63, WHITE, std::format("{:+}", d.vs));
 }
 
 void render(std::stop_token st, Snapshot<std::vector<DisplayData>> &snap, const Config &cfg)

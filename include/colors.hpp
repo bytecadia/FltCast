@@ -1,4 +1,5 @@
-#include "ui.hpp"
+#pragma once
+
 #include "graphics.h"
 
 static const rgb_matrix::Color RED(227, 36, 0);

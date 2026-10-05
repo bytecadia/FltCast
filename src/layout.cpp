@@ -1,46 +1,8 @@
+#include <algorithm>
 #include <string>
-#include <SQLiteCpp/SQLiteCpp.h>
 
-#include "config.hpp" // TODO: Pretty sure config should be used here?
-#include "aircraft.hpp"
-#include "colors.hpp"
-#include "strings.hpp"
 #include "graphics.h"
-#include "data.hpp"
 #include "layout.hpp"
-#include "geometry.hpp"
-
-DisplayLayout::DisplayLayout(const std::vector<DisplayData> &data,
-                             const rgb_matrix::Font &sml,
-                             const rgb_matrix::Font &med, const rgb_matrix::Font &lrg, int x, int y, int w, int h, int padding, int row_gap, int img_span)
-    : content(x, y, w, h), row_gap(row_gap), img_span(img_span)
-{
-    rows.push_back(Row{
-        Mode::Scroll,
-        {Element{Mode::Fit, 0, {Text{"TRK", &lrg, &ORANGE}, Text{"ID", &lrg, &ORANGE}}},
-         Element{Mode::Fit, 0, {Text{"DIST", &lrg, &GREY}}}},
-        lrg.height(), // TODO: Made it largest font height for now, should be good?
-        0});
-
-    for (std::size_t i = 0; i < data.size(); i++)
-    {
-        auto &d = data[i];
-        rows.push_back(Row{
-            Mode::Scroll,
-            {Element{Mode::Fit, 0, {Text{std::format("{:02}", i), &lrg, &GREY}, Text{d.sub_header, &lrg, i == 0 ? &ORANGE : &WHITE}}},
-             Element{Mode::Fit, 0, {Text{std::to_string(d.distance), &lrg, &GREY}}}},
-            lrg.height(),
-            0});
-    }
-
-    rows.push_back(Row{
-        Mode::Scroll,
-        {Element{Mode::Fit, 0, {Text{"SCAN", &lrg, &ORANGE}, Text{"20:08:53", &lrg, &ORANGE}}}},
-        lrg.height(),
-        0});
-
-    content.inset(padding);
-}
 
 int msr(const Text &t)
 {
@@ -67,14 +29,6 @@ std::vector<Position> lay_elmnt(int x, int y, int l, int r, int &w,
     return pos;
 }
 
-std::pair<int, int> rght_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest)
-{
-    int period = std::max(r - l, msr(rest) + min_gap);
-    strt -= ((time * pps) / 1000) % period;
-
-    return {strt, strt + period};
-}
-
 std::pair<int, int> lft_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps, int64_t time, const Row &rest)
 {
     int period = std::max(r - l, msr(rest) + min_gap);
@@ -86,7 +40,6 @@ std::pair<int, int> lft_scrl_plcmnt(int strt, int l, int r, int min_gap, int pps
 std::vector<Position> lay_row(int x, int y, int l, int r, const Row &row, int64_t time)
 {
     std::vector<Position> pos;
-    int start = x;
 
     for (size_t i = 0; i < row.items.size(); i++)
     {
