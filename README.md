@@ -98,6 +98,8 @@ Write the systemd service file. Update with the location of the repository.
 ```
 [Unit]
 Description=FltCast
+After=network-online.target dump1090-fa.service
+Wants=network-online.target dump1090-fa.service
 
 [Service]
 Type=simple
@@ -105,15 +107,10 @@ WorkingDirectory=/path/to/fltcast
 ExecStart=/path/to/fltcast/build/flight_cast
 Restart=on-failure
 RestartSec=5
+User=root
 
 [Install]
 WantedBy=multi-user.target
-```
-
-Start the service
-```
-sudo systemctl daemon-reload
-sudo systemctl enable --now fltcast
 ```
 
 ## Configuration
