@@ -19,7 +19,7 @@ FltCast is designed to work with an RTL-SDR and any ADS-B decoder that provides 
 - [RTL-SDR](https://amzn.to/47ngHxq)
 - [32x64 LED Matrix](https://amzn.to/4rCTnoO)
 - [RGB Matrix Adapter Board](https://amzn.to/4hwtSAM)
-- [HUB75 RGB LED Matrix](https://amzn.to/3TtoiXR)
+- [5V 15A Power Supply](https://amzn.to/3TtoiXR)
 - [USB-C Pigtail Cables](https://amzn.to/4iXFlMl)
 - [Raspberry Pi 4](https://amzn.to/4xKLPBJ)
 - [WAGO 221-413 Lever Connectors](https://amzn.to/4z2amDs)
