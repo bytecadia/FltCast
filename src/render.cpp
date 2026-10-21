@@ -35,7 +35,7 @@ void draw_positions(const std::vector<Position> &positions, Canvas &canvas)
 }
 
 // TODO: Pass in a rect
-void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int w, int h, long elapsed)
+void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int w, int h, long elapsed, const rgb_matrix::Font &sml)
 {
     Painter p{c.GetRGBMatrix()};
 
@@ -43,15 +43,20 @@ void draw_radar(Canvas &c, Config cfg, const std::vector<DisplayData> &data, int
     int cy = h / 2;
     int radius = w / 2 - 2;
 
+    // Range label takes the top-left corner of the frame, like the dossier panel titles
+    std::string rng = std::format("{}MI", static_cast<int>(cfg.range));
+    int rng_end = rgb_matrix::MeasureText(sml, rng.c_str());
+    p.text(sml, 0, 5, MID, rng);
+
     // Frame
-    const int corners[4][4] = {{0, 0, 1, 1}, {w - 1, 0, -1, 1}, {0, h - 1, 1, -1}, {w - 1, h - 1, -1, -1}};
+    const int corners[3][4] = {{w - 1, 0, -1, 1}, {0, h - 1, 1, -1}, {w - 1, h - 1, -1, -1}};
     for (auto &k : corners)
     {
         p.line(k[0], k[1], k[0] + 3 * k[2], k[1], MID);
         p.line(k[0], k[1], k[0], k[1] + 3 * k[3], MID);
     }
-    p.dotted(3, 0, w - 5, 0, FRAME);
-    p.dotted(0, 3, 0, h - 5, FRAME);
+    p.dotted(rng_end + 1, 0, w - 5, 0, FRAME);
+    p.dotted(0, 7, 0, h - 5, FRAME);
     p.dotted(4, h - 1, w - 5, h - 1, FRAME);
     p.dotted(w - 1, 4, w - 1, h - 4, RING);
     p.line(cx, 0, cx, 1, WHITE);
@@ -132,7 +137,7 @@ void draw_planes(Canvas &c, const std::vector<DisplayData> &data, const rgb_matr
 
     int lft = content.lft();
     int rgt = content.rght() - 1; // Last column inside the padding
-    int cs_x = lft + 14; // Callsign column
+    int cs_x = lft + 14;          // Callsign column
 
     // Baselines
     int head_y = content.tp() + sml.baseline();
@@ -189,9 +194,9 @@ void draw_dossier(Canvas &c, const DisplayData &d, std::size_t count, const rgb_
 
     // Header bar
     p.fill(0, 0, c.width(), 7, ORANGE);
-    p.text(sml, 2, 6, off, std::format("NEAREST // 1 OF {}", count));
-    for (int i = 0; i < 4; i++)
-        p.fill(113 + 3 * i, 4 - i, 2, 2 + i, off); // TODO: Signal bars decoration
+    p.right(sml, c.width() - 3, 6, off, std::format("NEAREST 1 OF {}", count));
+    // for (int i = 0; i < 4; i++)
+    //     p.fill(113 + 3 * i, 4 - i, 2, 2 + i, off); // TODO: Signal bars decoration
 
     // Aircraft panel
     p.panel(0, 10, 55, 63, sml, d.sub_header, ORANGE);
@@ -367,7 +372,7 @@ void render(std::stop_token st, Snapshot<std::vector<DisplayData>> &snap, const 
             draw_dossier(canvas, aircrafts[0], aircrafts.size(), med, sml, cache.get_image(aircrafts[0].sprite_path, 25));
         else
         {
-            draw_radar(canvas, cfg, aircrafts, 64, 64, elapsed);
+            draw_radar(canvas, cfg, aircrafts, 64, 64, elapsed, sml);
 
             Rect plane_frame{64, 0, 64, 64};
             plane_frame.inset(2);
