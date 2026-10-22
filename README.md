@@ -2,27 +2,42 @@
 
 FltCast is a C++ ADS-B flight tracker built for Raspberry Pi and HUB75 RGB LED matrices.
 
-It reads SBS aircraft data from port `30003`, selects the nearest aircraft, enriches the data with a local DB lookup, and renders it to the LED matrix.
+It reads SBS aircraft data from port `30003`, enriches it with a local DB lookup, and renders it to a 128x64 display made of four 64x32 panels. A radar view maps the planes within range and lists the five nearest; for 10 seconds out of every 30, it switches to a detail screen for the nearest plane.
 
 FltCast is designed to work with an RTL-SDR and any ADS-B decoder that provides an SBS/BaseStation-compatible stream, such as `dump1090-fa`.
 
 <p align="center">
-  <img src="assets/display_sprite.png" alt="Display with aircraft sprite" width="42%" />
+  <img src="assets/fltcast-v2-radar.webp" alt="FltCast radar view with the five nearest planes" width="45%" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="assets/display_airline.png" alt="Display with airline logo" width="42%" />
+  <img src="assets/fltcast-v2-dossier.webp" alt="FltCast detail screen for the nearest plane" width="45%" />
 </p>
+
+## What's New in v2
+
+This is FltCast v2. The original single-panel version is on the [`v1` branch](https://github.com/bytecadia/FltCast/tree/v1).
+
+- **4x the pixels:** four 64x32 P2.5 panels make a 128x64 display in the same footprint as v1's single panel
+- **New UI:** a radar view of nearby planes with a list of the five nearest, plus a detail screen for the nearest plane
+- **Aircraft-specific sprites** for common types like the A320, 737, 787, Cessna 172 and R44
+- **Thinner case:** the antenna and power jack are now panel-mounted
+- **Matrix settings in `config.ini`:** chain length, pixel mapper, refresh limit and GPIO slowdown are no longer hard-coded
 
 ## Parts List
 
 *As an Amazon Associate, I earn from qualifying purchases.*
 
+The Amazon links are there for convenience, but you may be able to find these parts cheaper elsewhere.
+
 - [RTL-SDR](https://amzn.to/47ngHxq)
-- [32x64 LED Matrix](https://amzn.to/4rCTnoO)
+- [64x32 P2.5 LED Matrix](https://link.amazon/B09zRx6zl) (x4)
 - [RGB Matrix Adapter Board](https://amzn.to/4hwtSAM)
 - [5V 15A Power Supply](https://amzn.to/3TtoiXR)
 - [USB-C Pigtail Cables](https://amzn.to/4iXFlMl)
-- [Raspberry Pi 4](https://amzn.to/4xKLPBJ)
+- Raspberry Pi 4: Pi prices right now are outrageous, if you can get your hands on a Pi 4 with 1GB RAM that's plenty, but here's the link for a [reputable reseller that I used](https://link.amazon/B0gUnzBAM)
 - [WAGO 221-413 Lever Connectors](https://amzn.to/4z2amDs)
+- [5.5x2.1mm Panel-Mount DC Power Jack](https://link.amazon/B0cx1QTyA)
+- [SMA Bulkhead Antenna Extension Cable](https://link.amazon/B0bvERtUQ)
+- M3 and M2.5 heat-set threaded inserts and bolts
 - [Case STLs](case)
 
 ## Build Guide
@@ -85,9 +100,6 @@ cmake --build build
 ```
 
 Run:
- 
-> **Note:** This may take around 30 seconds to begin displaying. SBS data arrives across several transmissions and needs time to accumulate.
-
 ```bash
 sudo ./build/flight_cast
 ```
@@ -148,39 +160,38 @@ lon = -74.0060
 
 ```ini
 [font]
-sml = 4x6
-med = 5x8
+sml = tom-thumb
+med = 4x6
 lrg = 5x8
 ```
 
 ### Matrix Layout
 
+`cols` and `rows` are the size of one panel. `chain_length` is how many panels are chained, and `pixel_mapper` arranges them; `U-mapper` turns a chain of four into a 128x64 display. `limit_refresh` (Hz) and `gpio_slowdown` are passed to the RGB matrix library and may need tuning for your Pi model.
+
 ```ini
 [matrix]
 cols = 64
 rows = 32
+chain_length = 4
+parallel = 1
+pixel_mapper = U-mapper
+limit_refresh = 300
+gpio_slowdown = 5
 padding = 2
 row_gap = 0
 img_span = 2
 img_height = 14
 ```
 
-## Known Limitations
+### Radar
 
-Some RGB matrix runtime options are currently hard-coded in the application rather than exposed through the configuration file:
+`range` is the radar radius in miles. Only planes within this distance are shown.
 
-```cpp
-options.chain_length = 1;
-options.parallel = 1;
-options.limit_refresh_rate_hz = 300;
-options.show_refresh_rate = true;
-
-rgb_matrix::RuntimeOptions runtime_opt;
-runtime_opt.gpio_slowdown = 5;
-runtime_opt.drop_privileges = -1;
+```ini
+[radar]
+range = 25
 ```
-
-These values may need to be changed in source code depending on the matrix hardware and Raspberry Pi configuration. This is temporary and should be moved into the configuration file in a future update. Although if you are using my exact setup there is no need to change this.
 
 ## AI Usage
 
