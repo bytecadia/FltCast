@@ -162,25 +162,8 @@ img_span = 2
 img_height = 14
 ```
 
-## Known Limitations
-
-Some RGB matrix runtime options are currently hard-coded in the application rather than exposed through the configuration file:
-
-```cpp
-options.chain_length = 1;
-options.parallel = 1;
-options.limit_refresh_rate_hz = 300;
-options.show_refresh_rate = true;
-
-rgb_matrix::RuntimeOptions runtime_opt;
-runtime_opt.gpio_slowdown = 5;
-runtime_opt.drop_privileges = -1;
-```
-
-These values may need to be changed in source code depending on the matrix hardware and Raspberry Pi configuration. This is temporary and should be moved into the configuration file in a future update. Although if you are using my exact setup there is no need to change this.
-
 ## AI Usage
 
-This project was written entirely by hand, with the exception of a few small utility functions. I spent weeks architecting the program from end to end before writing it. 
+This project was written entirely by hand, with the exception of a few small utility functions. I spent weeks architecting the program from end to end before writing it. Although things had changed during development you can still [checkout my architecture documentation](Architecture.md).
 
 So if the code is bad, that's all me :)
