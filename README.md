@@ -12,16 +12,6 @@ FltCast is designed to work with an RTL-SDR and any ADS-B decoder that provides 
   <img src="assets/fltcast-v2-dossier.webp" alt="FltCast detail screen for the nearest plane" width="45%" />
 </p>
 
-## What's New in v2
-
-This is FltCast v2. The original single-panel version is on the [`v1` branch](https://github.com/bytecadia/FltCast/tree/v1).
-
-- **4x the pixels:** four 64x32 P2.5 panels make a 128x64 display in the same footprint as v1's single panel
-- **New UI:** a radar view of nearby planes with a list of the five nearest, plus a detail screen for the nearest plane
-- **Aircraft-specific sprites** for common types like the A320, 737, 787, Cessna 172 and R44
-- **Thinner case:** the antenna and power jack are now panel-mounted
-- **Matrix settings in `config.ini`:** chain length, pixel mapper, refresh limit and GPIO slowdown are no longer hard-coded
-
 ## Parts List
 
 *As an Amazon Associate, I earn from qualifying purchases.*
@@ -40,23 +30,12 @@ The Amazon links are there for convenience, but you may be able to find these pa
 - M3 and M2.5 heat-set threaded inserts and bolts
 - [Case STLs](case)
 
-## Build Guide
-
-A more detailed step-by-step build guide is currently in progress. If you'd like to be notified when it's available, you can [join the waitlist here](https://bytecadia.kit.com/4a5f30c81c).
 
 ## Setup
 
 ### Disable the Raspberry Pi Audio Kernel Module
 
 The RGB matrix library may conflict with the `snd_bcm2835` audio kernel module.
-
-Check whether it is loaded:
-
-```bash
-lsmod | grep snd_bcm2835
-```
-
-If it is, unload it:
 
 ```bash
 sudo modprobe -r snd_bcm2835
@@ -68,9 +47,7 @@ sudo modprobe -r snd_bcm2835
 sudo apt install git cmake rtl-sdr
 ```
 
-## Install dump1090-fa
-
-Install the FlightAware repository:
+### Install dump1090-fa
 
 ```bash
 wget https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/f/flightaware-apt-repository/flightaware-apt-repository_1.3_all.deb
@@ -195,6 +172,6 @@ range = 25
 
 ## AI Usage
 
-This project was written entirely by hand, with the exception of a few small utility functions. I spent weeks architecting the program from end to end before writing it. 
+V1 was written entirely by hand as a project to improve my system design and software architecture skills. V2 is mostly a UI update on the code side, so I used AI assistance to finish it without getting bogged down in tedious work.
 
-So if the code is bad, that's all me :)
+So if the code is bad, that’s ~mostly~ all me :)
